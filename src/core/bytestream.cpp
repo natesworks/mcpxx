@@ -126,3 +126,12 @@ std::string Bytestream::readString()
 	offset += length;
 	return value;
 }
+
+BlockPosition Bytestream::readBlockPosition()
+{
+	int64_t value = readLong();
+	int x = (value >> 38) & 0x3FFFFFF;
+	int y = (value >> 26) & 0xFFF;
+	int z = value & 0x3FFFFFF;
+	return BlockPosition(x, y, z);
+}
