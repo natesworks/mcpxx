@@ -4,6 +4,7 @@
 
 #include "../data/callinginstance.h"
 #include "logger.h"
+#include "../data/messages.h"
 
 class Messaging
 {

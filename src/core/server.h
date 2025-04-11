@@ -23,6 +23,10 @@
 #include "messaging.h"
 #include "bytestream.h"
 
+/* https://minecraft.wiki/w/Minecraft_Wiki:Projects/wiki.vg_merge/Protocol_version_numbers */
+#define PROTOCOLVERSION 770 // 1.21.5
+#define SNAPSHOT 0x40000000
+
 class Server
 {
 public:

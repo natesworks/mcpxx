@@ -13,4 +13,8 @@ struct CallingInstance
 	int packetID;
 	std::vector<uint8_t> data;
 	State state;
+
+	int32_t protocolVersion;
+	std::string serverAddress;
+	ushort port;
 };
