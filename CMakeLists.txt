@@ -8,6 +8,7 @@ set(CMAKE_CXX_FLAGS "-Wall -Wextra -fPIC")
 file(GLOB_RECURSE SRC
     "src/core/**.cpp"
     "src/data/*.cpp"
+    "src/protocol/*.cpp"
 )
 
 add_library(mcpxx SHARED ${SRC})

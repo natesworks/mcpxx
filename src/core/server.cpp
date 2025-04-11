@@ -22,7 +22,7 @@ void Server::handleClient(CallingInstance &ci)
         {
             uint8_t temp[5];
             int head = recv(ci.socket, temp, 5, 0);
-            if (head < 5) 
+            if (head <= 5) 
             {
                 Logger::error("Failed to read packet header");
                 break;
@@ -83,7 +83,7 @@ int Server::createSocket()
 
 	sockaddr_in serverAddress;
 	serverAddress.sin_family = AF_INET;
-	serverAddress.sin_port = htons(9339);
+	serverAddress.sin_port = htons(port);
 	serverAddress.sin_addr.s_addr = INADDR_ANY;
 
 	if (bind(serverSocket, (struct sockaddr *)&serverAddress, sizeof(serverAddress)) == -1)
