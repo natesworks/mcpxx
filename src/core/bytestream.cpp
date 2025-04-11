@@ -118,3 +118,11 @@ int64_t Bytestream::readVLong()
 
     return value;
 }
+
+std::string Bytestream::readString()
+{
+	int length = readVInt();
+	std::string value(buffer.begin() + offset, buffer.begin() + offset + length);
+	offset += length;
+	return value;
+}
