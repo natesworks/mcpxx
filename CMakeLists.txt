@@ -20,7 +20,7 @@ install(TARGETS mcpxx
     RUNTIME DESTINATION bin
 )
 
-install(DIRECTORY src
+install(DIRECTORY src/
     DESTINATION include/mcpxx
     FILES_MATCHING PATTERN "*.h"
 )
