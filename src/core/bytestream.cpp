@@ -135,3 +135,9 @@ BlockPosition Bytestream::readBlockPosition()
 	int z = value & 0x3FFFFFF;
 	return BlockPosition(x, y, z);
 }
+
+int8_t Bytestream::readAngle()
+{
+	int8_t value = readByte();
+	return value;
+}
