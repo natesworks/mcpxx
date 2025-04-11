@@ -141,3 +141,115 @@ int8_t Bytestream::readAngle()
 	int8_t value = readByte();
 	return value;
 }
+
+void Bytestream::writeBool(bool value)
+{
+	buffer.push_back(value);
+}
+
+void Bytestream::writeByte(int8_t value)
+{
+	buffer.push_back(value);
+}
+
+void Bytestream::writeUnsignedByte(uint8_t value)
+{
+	buffer.push_back(value);
+}
+
+void Bytestream::writeShort(int16_t value)
+{
+	buffer.push_back(value >> 8);
+	buffer.push_back(value & 0xFF);
+}
+
+void Bytestream::writeUnsignedShort(uint16_t value)
+{
+	buffer.push_back(value >> 8);
+	buffer.push_back(value & 0xFF);
+}
+
+void Bytestream::writeInt(int32_t value)
+{
+	buffer.push_back(value >> 24);
+	buffer.push_back((value >> 16) & 0xFF);
+	buffer.push_back((value >> 8) & 0xFF);
+	buffer.push_back(value & 0xFF);
+}
+
+void Bytestream::writeLong(int64_t value)
+{
+	buffer.push_back(value >> 56);
+	buffer.push_back((value >> 48) & 0xFF);
+	buffer.push_back((value >> 40) & 0xFF);
+	buffer.push_back((value >> 32) & 0xFF);
+	buffer.push_back((value >> 24) & 0xFF);
+	buffer.push_back((value >> 16) & 0xFF);
+	buffer.push_back((value >> 8) & 0xFF);
+	buffer.push_back(value & 0xFF);
+}
+
+void Bytestream::writeFloat(float value)
+{
+	int32_t intValue;
+	std::memcpy(&intValue, &value, 4);
+	writeInt(intValue);
+}
+
+void Bytestream::writeDouble(double value)
+{
+	int64_t intValue;
+	std::memcpy(&intValue, &value, 8);
+	writeLong(intValue);
+}
+
+void Bytestream::writeVInt(int32_t value)
+{
+	while (true)
+	{
+		if ((value & ~SEGMENTBITS) == 0)
+		{
+			writeByte(value);
+			return;
+		}
+		else
+		{
+			writeByte((value & SEGMENTBITS) | CONTINUEBIT);
+			value >>= 7;
+		}
+	}
+}
+
+void Bytestream::writeVLong(int64_t value)
+{
+	while (true)
+	{
+		if ((value & ~SEGMENTBITS) == 0)
+		{
+			writeByte(value);
+			return;
+		}
+		else
+		{
+			writeByte((value & SEGMENTBITS) | CONTINUEBIT);
+			value >>= 7;
+		}
+	}
+}
+
+void Bytestream::writeString(const std::string &value)
+{
+	writeVInt(value.length());
+	buffer.insert(buffer.end(), value.begin(), value.end());
+}
+
+void Bytestream::writeBlockPosition(const BlockPosition &value)
+{
+	int64_t packedValue = ((int64_t)value.x << 38) | ((int64_t)value.y << 26) | (int64_t)value.z;
+	writeLong(packedValue);
+}
+
+void Bytestream::writeAngle(int8_t value)
+{
+	writeByte(value);
+}
