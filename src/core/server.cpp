@@ -31,11 +31,10 @@ void Server::handleClient(CallingInstance &ci)
             Bytestream tempStream(std::vector<uint8_t>(temp, temp + head));
             int32_t packetLength = tempStream.readVInt();
 
-            std::vector<uint8_t> buffer(packetLength);
             int bytesRead = 0;
             while (bytesRead < packetLength)
             {
-                int part = recv(ci.socket, buffer.data() + bytesRead, packetLength - bytesRead, 0);
+                int part = recv(ci.socket, ci.data.data() + bytesRead, packetLength - bytesRead, 0);
                 if (part <= 0)
                 {
                     Logger::error("Failed to read packet");
@@ -44,18 +43,18 @@ void Server::handleClient(CallingInstance &ci)
                 bytesRead += part;
             }
 
-            buffer.insert(buffer.begin(), temp, temp + head);
+            ci.data.insert(ci.data.begin(), temp, temp + head);
 
-            Bytestream stream(buffer);
+            Bytestream stream(ci.data);
             stream.readVInt();
-            int32_t packetID = stream.readVInt();
+            ci.packetID = stream.readVInt();
 			if (time(nullptr) - timeout > 30)
             {
                 Logger::log("Client disconnected due to inactivity: " + std::string(clientIp));
                 close(ci.socket);
                 break;
             }
-            Messaging::handlePacket(packetID, buffer, ci);
+            Messaging::handlePacket(ci);
 
             timeout = time(nullptr);
         }
@@ -109,7 +108,7 @@ void Server::listenForConnections()
 
 	while (true)
 	{
-		CallingInstance ci;	
+		CallingInstance ci;
 		sockaddr_in clientAddress;
 		socklen_t clientLen = sizeof(clientAddress);
 		ci.socket = accept(serverSocket, (struct sockaddr *)&clientAddress, &clientLen);

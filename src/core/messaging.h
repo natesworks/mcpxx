@@ -8,6 +8,6 @@
 class Messaging
 {
 public:
-    static void handlePacket(int packetID, const std::vector<uint8_t> &data, CallingInstance &ci);
+    static void handlePacket(CallingInstance &ci);
     static void sendPacket(int packetID, const std::vector<uint8_t> &data, CallingInstance &ci);
 };

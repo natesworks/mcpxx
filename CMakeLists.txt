@@ -6,7 +6,7 @@ set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_FLAGS "-Wall -Wextra -fPIC")
 
 file(GLOB_RECURSE SRC
-    "src/core/*.cpp"
+    "src/core/**.cpp"
     "src/data/*.cpp"
 )
 
