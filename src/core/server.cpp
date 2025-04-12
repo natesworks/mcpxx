@@ -35,15 +35,20 @@ void Server::handleClient(CallingInstance &ci)
             while (bytesRead < packetLength)
             {
                 int part = recv(ci.socket, ci.data.data() + bytesRead, packetLength - bytesRead, 0);
-                if (part <= 0)
+                if (part == 0)
                 {
                     break;
                 }
+				if (part < 0)
+				{
+					Logger::error("Failed to read packet data");
+					break;
+				}
                 bytesRead += part;
             }
 
             ci.data.insert(ci.data.begin(), temp, temp + head);
-            Bytestream stream(ci.data);
+            Bytestream stream(ci.data, false);
             stream.readVInt();
             ci.packetID = stream.readVInt();
 
@@ -58,6 +63,11 @@ void Server::handleClient(CallingInstance &ci)
             timeout = time(nullptr);
         }
     }
+	catch (const std::exception &e)
+	{
+		Logger::debug("Client disconnected. " + std::string(e.what()) + ".");
+		close(ci.socket);
+	}
     catch (...)
     {
         close(ci.socket);

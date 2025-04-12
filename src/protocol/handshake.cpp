@@ -4,6 +4,7 @@ void Handshake::handlePacket(CallingInstance &ci)
 {
     Bytestream stream(ci.data);
     ci.protocolVersion = stream.readVInt();
+    Logger::debug("Protocol version: " + std::to_string(ci.protocolVersion));
     if (ci.protocolVersion != PROTOCOLVERSION)
     {
         throw std::runtime_error("Incompatible client");

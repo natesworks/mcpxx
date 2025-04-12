@@ -1,9 +1,14 @@
 #include "bytestream.h"
 
-Bytestream::Bytestream(const std::vector<uint8_t> &buffer)
+Bytestream::Bytestream(const std::vector<uint8_t> &buffer, bool skipHeader)
 	: buffer(buffer)
 	, offset(0)
 {
+	if (skipHeader)
+	{
+		readVInt();
+		readVInt();
+	}
 }
 
 bool Bytestream::readBool()

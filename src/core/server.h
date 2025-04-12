@@ -1,6 +1,7 @@
 #pragma once
 
 #include <iostream>
+#include <functional>
 #ifdef _WIN32
 #include <windows.h>
 #include <winsock2.h>
@@ -35,4 +36,5 @@ public:
     static void handleClient(CallingInstance &ci);
     int createSocket();
     void listenForConnections();
+
 };

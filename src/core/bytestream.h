@@ -14,7 +14,7 @@
 class Bytestream
 {
 public:
-	Bytestream(const std::vector<uint8_t> &buffer);
+	Bytestream(const std::vector<uint8_t> &buffer, bool skipHeader = true);
     Bytestream() = default;
 
 	/* Read functions */
