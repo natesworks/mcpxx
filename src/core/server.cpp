@@ -11,7 +11,6 @@ void Server::handleClient(CallingInstance &ci)
         if (getpeername(ci.socket, (sockaddr *)&clientAddr, &addrLen) == -1)
         {
             Logger::error("Failed to get client IP");
-            close(ci.socket);
             return;
         }
 
@@ -22,7 +21,7 @@ void Server::handleClient(CallingInstance &ci)
         {
             uint8_t temp[5];
             int head = recv(ci.socket, temp, 5, 0);
-            if (head <= 5) 
+            if (head < 5)
             {
                 Logger::error("Failed to read packet header");
                 break;
@@ -31,6 +30,7 @@ void Server::handleClient(CallingInstance &ci)
             Bytestream tempStream(std::vector<uint8_t>(temp, temp + head));
             int32_t packetLength = tempStream.readVInt();
 
+            ci.data.resize(packetLength);
             int bytesRead = 0;
             while (bytesRead < packetLength)
             {
@@ -44,18 +44,18 @@ void Server::handleClient(CallingInstance &ci)
             }
 
             ci.data.insert(ci.data.begin(), temp, temp + head);
-
             Bytestream stream(ci.data);
             stream.readVInt();
             ci.packetID = stream.readVInt();
-			if (time(nullptr) - timeout > 30)
+
+            if (time(nullptr) - timeout > 30)
             {
                 Logger::log("Client disconnected due to inactivity: " + std::string(clientIp));
                 close(ci.socket);
-                break;
+                return;
             }
-            Messaging::handlePacket(ci);
 
+            Messaging::handlePacket(ci);
             timeout = time(nullptr);
         }
     }
