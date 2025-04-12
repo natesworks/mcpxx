@@ -37,7 +37,6 @@ void Server::handleClient(CallingInstance &ci)
                 int part = recv(ci.socket, ci.data.data() + bytesRead, packetLength - bytesRead, 0);
                 if (part <= 0)
                 {
-                    Logger::error("Failed to read packet");
                     break;
                 }
                 bytesRead += part;

@@ -6,7 +6,7 @@ void Handshake::handlePacket(CallingInstance &ci)
     ci.protocolVersion = stream.readVInt();
     if (ci.protocolVersion != PROTOCOLVERSION)
     {
-        throw std::runtime_error("Incompatible client"); // TODO show disconnect screen
+        throw std::runtime_error("Incompatible client");
         return;
     }
     ci.serverAddress = stream.readString();

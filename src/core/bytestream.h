@@ -15,6 +15,7 @@ class Bytestream
 {
 public:
 	Bytestream(const std::vector<uint8_t> &buffer);
+    Bytestream() = default;
 
 	/* Read functions */
     bool readBool();
