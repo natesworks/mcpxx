@@ -1,77 +1,87 @@
 #include "server.h"
 
-void Server::handleClient(CallingInstance &ci)
+uint32_t Server::readPacketLength(CallingInstance& ci)
 {
-    try
-    {
-        time_t timeout = time(nullptr);
+	uint32_t value = 0;
+	int position = 0;
 
-        sockaddr_in clientAddr;
-        socklen_t addrLen = sizeof(clientAddr);
-        if (getpeername(ci.socket, (sockaddr *)&clientAddr, &addrLen) == -1)
-        {
-            Logger::error("Failed to get client IP");
-            return;
-        }
-
-        char clientIp[INET_ADDRSTRLEN];
-        inet_ntop(AF_INET, &clientAddr.sin_addr, clientIp, INET_ADDRSTRLEN);
-
-        while (true)
-        {
-            uint8_t temp[5];
-            int head = recv(ci.socket, temp, 5, 0);
-            if (head < 5)
-            {
-                Logger::error("Failed to read packet header");
-                break;
-            }
-
-            Bytestream tempStream(std::vector<uint8_t>(temp, temp + head));
-            int32_t packetLength = tempStream.readVInt();
-
-            ci.data.resize(packetLength);
-            int bytesRead = 0;
-            while (bytesRead < packetLength)
-            {
-                int part = recv(ci.socket, ci.data.data() + bytesRead, packetLength - bytesRead, 0);
-                if (part == 0)
-                {
-                    break;
-                }
-				if (part < 0)
-				{
-					Logger::error("Failed to read packet data");
-					break;
-				}
-                bytesRead += part;
-            }
-
-            ci.data.insert(ci.data.begin(), temp, temp + head);
-            Bytestream stream(ci.data, false);
-            stream.readVInt();
-            ci.packetID = stream.readVInt();
-
-            if (time(nullptr) - timeout > 30)
-            {
-                Logger::log("Client disconnected due to inactivity: " + std::string(clientIp));
-                close(ci.socket);
-                return;
-            }
-
-            Messaging::handlePacket(ci);
-            timeout = time(nullptr);
-        }
-    }
-	catch (const std::exception &e)
+	for (size_t offset = 0; offset < ci.data.size(); ++offset)
 	{
-		Logger::debug("Client disconnected. " + std::string(e.what()) + ".");
-		close(ci.socket);
+		uint8_t byte = ci.data[offset];
+		value |= (byte & SEGMENTBITS) << position;
+
+		if ((byte & CONTINUEBIT) == 0)
+		{
+			ci.packetLength = value;
+			return offset + 1;
+		}
+
+		position += 7;
+		if (position >= 32)
+			throw std::runtime_error("VInt too large");
 	}
-    catch (...)
-    {
-        close(ci.socket);
-    }
+
+	throw std::runtime_error("Incomplete VInt");
+}
+
+void Server::handleClient(CallingInstance ci)
+{
+	try
+	{
+		sockaddr_in clientAddr;
+		socklen_t addrLen = sizeof(clientAddr);
+		if (getpeername(ci.socket, (sockaddr*)&clientAddr, &addrLen) == -1)
+			throw std::runtime_error("Failed to get client IP");
+
+		char clientIp[INET_ADDRSTRLEN];
+		inet_ntop(AF_INET, &clientAddr.sin_addr, clientIp, INET_ADDRSTRLEN);
+		time_t timeout = time(nullptr);
+
+		while (true)
+		{
+			uint8_t header[10];
+			int headerRead = recv(ci.socket, header, sizeof(header), 0);
+			if (headerRead <= 0)
+				break;
+
+			ci.data.assign(header, header + headerRead);
+			uint32_t packetLengthSize = readPacketLength(ci);
+
+			int totalSize = ci.packetLength + packetLengthSize;
+			ci.data.resize(totalSize);
+
+			int bytesRead = headerRead;
+			while (bytesRead < totalSize)
+			{
+				int part = recv(ci.socket, ci.data.data() + bytesRead, totalSize - bytesRead, 0);
+				if (part <= 0)
+					throw std::runtime_error("Failed to read full packet");
+				bytesRead += part;
+			}
+
+            ci.nextState = ci.state;
+			Messaging::handlePacket(ci);
+            ci.state = ci.nextState;
+
+			if (time(nullptr) - timeout > 30)
+			{
+				Logger::log("Client disconnected due to timeout: " + std::string(clientIp));
+				break;
+			}
+
+			timeout = time(nullptr);
+		}
+	}
+	catch (const std::exception& e)
+	{
+		Logger::debug("Client disconnected: " + std::string(e.what()));
+	}
+	catch (...)
+	{
+		Logger::debug("Client disconnected with unknown error");
+	}
+
+	close(ci.socket);
 }
 
 int Server::createSocket()
@@ -79,23 +89,19 @@ int Server::createSocket()
 #ifdef _WIN32
 	WSADATA wsaData;
 	if (WSAStartup(MAKEWORD(2, 2), &wsaData) != 0)
-	{
 		return -1;
-	}
 #endif
 
 	serverSocket = socket(AF_INET, SOCK_STREAM, 0);
 	if (serverSocket == -1)
-	{
 		return -1;
-	}
 
-	sockaddr_in serverAddress;
+	sockaddr_in serverAddress{};
 	serverAddress.sin_family = AF_INET;
 	serverAddress.sin_port = htons(port);
 	serverAddress.sin_addr.s_addr = INADDR_ANY;
 
-	if (bind(serverSocket, (struct sockaddr *)&serverAddress, sizeof(serverAddress)) == -1)
+	if (bind(serverSocket, (sockaddr*)&serverAddress, sizeof(serverAddress)) == -1)
 	{
 		close(serverSocket);
 		return -2;
@@ -118,14 +124,14 @@ void Server::listenForConnections()
 	while (true)
 	{
 		CallingInstance ci;
-		sockaddr_in clientAddress;
+		sockaddr_in clientAddress{};
 		socklen_t clientLen = sizeof(clientAddress);
-		ci.socket = accept(serverSocket, (struct sockaddr *)&clientAddress, &clientLen);
+		ci.socket = accept(serverSocket, (sockaddr*)&clientAddress, &clientLen);
 
 		if (ci.socket >= 0)
 		{
 			Logger::log("Client connected");
-			std::thread(handleClient, std::ref(ci)).detach();
+			std::thread(&Server::handleClient, this, ci).detach();
 		}
 	}
 }

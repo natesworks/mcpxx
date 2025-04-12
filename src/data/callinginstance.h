@@ -8,13 +8,17 @@
 
 struct CallingInstance
 {
+public:
 	int socket;
 	Player player;
-	int packetID;
+	uint32_t packetID;
 	std::vector<uint8_t> data;
-	State state;
+	uint32_t packetLength;
 
-	int32_t protocolVersion;
+	uint32_t protocolVersion;
 	std::string serverAddress;
 	ushort port;
+
+	State state;
+	State nextState; // Edit this instead of state or else handlers will break!
 };

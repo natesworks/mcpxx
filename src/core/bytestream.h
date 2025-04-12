@@ -14,7 +14,7 @@
 class Bytestream
 {
 public:
-	Bytestream(const std::vector<uint8_t> &buffer, bool skipHeader = true);
+	Bytestream(const std::vector<uint8_t> &buffer, uint32_t *packetLength = nullptr, uint32_t *packetID = nullptr, uint32_t offset = 0);
     Bytestream() = default;
 
 	/* Read functions */
@@ -48,6 +48,8 @@ public:
     void writeString(const std::string& value);
     void writeBlockPosition(const BlockPosition& value);
     void writeAngle(int8_t angle);
+
+    uint32_t getOffset();
 
 private:
 	std::vector<uint8_t> buffer;

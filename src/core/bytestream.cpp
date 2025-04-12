@@ -1,12 +1,22 @@
 #include "bytestream.h"
 
-Bytestream::Bytestream(const std::vector<uint8_t> &buffer, bool skipHeader)
-	: buffer(buffer)
-	, offset(0)
+Bytestream::Bytestream(const std::vector<uint8_t> &buffer, uint32_t *packetLength, uint32_t *packetID, uint32_t offset)
+	: buffer(buffer), offset(offset)
 {
-	if (skipHeader)
+	if (packetLength != nullptr)
+	{
+		*packetLength = readVInt();
+	}
+	else
 	{
 		readVInt();
+	}
+	if (packetID != nullptr)
+	{
+		*packetID = readVInt();
+	}
+	else
+	{
 		readVInt();
 	}
 }
@@ -98,30 +108,30 @@ int32_t Bytestream::readVInt()
 			Logger::error("VInt is too big");
 	}
 
-    return value;
+	return value;
 }
 
 int64_t Bytestream::readVLong()
 {
-    int64_t value = 0;
-    int position = 0;
-    int8_t currentByte;
+	int64_t value = 0;
+	int position = 0;
+	int8_t currentByte;
 
-    while (true)
-    {
-        currentByte = readByte();
-        value |= (currentByte & SEGMENTBITS) << position;
+	while (true)
+	{
+		currentByte = readByte();
+		value |= (currentByte & SEGMENTBITS) << position;
 
-        if ((currentByte & CONTINUEBIT) == 0)
-            break;
+		if ((currentByte & CONTINUEBIT) == 0)
+			break;
 
-        position += 7;
+		position += 7;
 
-        if (position >= 64)
-            Logger::error("VLong is too big");
-    }
+		if (position >= 64)
+			Logger::error("VLong is too big");
+	}
 
-    return value;
+	return value;
 }
 
 std::string Bytestream::readString()
@@ -257,4 +267,9 @@ void Bytestream::writeBlockPosition(const BlockPosition &value)
 void Bytestream::writeAngle(int8_t value)
 {
 	writeByte(value);
+}
+
+uint32_t Bytestream::getOffset()
+{
+	return offset;
 }
