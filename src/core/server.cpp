@@ -61,6 +61,7 @@ void Server::handleClient(CallingInstance ci)
 
             ci.nextState = ci.state;
 			Messaging::handlePacket(ci);
+			callHandler(ci);
             ci.state = ci.nextState;
 
 			if (time(nullptr) - timeout > 30)
@@ -133,5 +134,22 @@ void Server::listenForConnections()
 			Logger::log("Client connected");
 			std::thread(&Server::handleClient, this, ci).detach();
 		}
+	}
+}
+
+void Server::setHandler(State state, uint32_t packetID, std::function<void(CallingInstance &)> handler)
+{
+	handlers[state][packetID] = handler;
+}
+
+void Server::callHandler(CallingInstance &ci)
+{
+	auto stateIt = handlers.find(ci.state);
+	if (stateIt != handlers.end())
+	{
+		auto &packetMap = stateIt->second;
+		auto handlerIt = packetMap.find(ci.packetID);
+		if (handlerIt != packetMap.end())
+			handlerIt->second(ci);
 	}
 }
