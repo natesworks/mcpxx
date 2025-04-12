@@ -59,6 +59,7 @@ void Server::handleClient(CallingInstance ci)
 				bytesRead += part;
 			}
 
+			Utilities::dumpPacket(ci.state, ci.packetID, ci.data);
             ci.nextState = ci.state;
 			Messaging::handlePacket(ci);
 			callHandler(ci);

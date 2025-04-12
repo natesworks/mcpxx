@@ -31,6 +31,7 @@
 #define SNAPSHOT 0x40000000
 //#define SINGLETHREADED
 #define DUMPPACKETS
+#define DEBUG // comment out to remove debug logs
 
 class Server
 {
