@@ -1,6 +1,7 @@
-#include "logger.h"
-
 #include <iostream>
+
+#include "logger.h"
+#include "server.h"
 
 void Logger::log(std::string message)
 {
@@ -20,5 +21,7 @@ void Logger::error(std::string message)
 
 void Logger::debug(std::string message)
 {
+    #ifdef DEBUG
     std::cout << COLOR_DEBUG << "[DEBUG] " << RESET << message << std::endl;
+    #endif
 }
