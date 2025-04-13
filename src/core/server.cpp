@@ -61,19 +61,9 @@ void Server::handleClient(CallingInstance ci)
 
 			Utilities::dumpPacket(ci.state, ci.packetID, ci.data);
 
-			if (ci.state == Status)
-			{
-				ci.packetID = readVInt(ci);
-				ci.nextState = ci.state;
-				callHandler(ci, Messaging::handlePacket(ci));
-				ci.state = ci.nextState;
-			}
-			else
-			{
-				ci.nextState = ci.state;
-				callHandler(ci, Messaging::handlePacket(ci));
-				ci.state = ci.nextState;
-			}
+			ci.nextState = ci.state;
+			callHandler(ci, Messaging::handlePacket(ci));
+			ci.state = ci.nextState;
 
 			if (time(nullptr) - timeout > 30)
 			{
@@ -86,7 +76,7 @@ void Server::handleClient(CallingInstance ci)
 	}
 	catch (const std::exception &e)
 	{
-		Logger::debug("Client disconnected: " + std::string(e.what()));
+		Logger::debug("Client disconnected: " + std::string(typeid(e).name()) + ": " + std::string(e.what()));
 	}
 	catch (...)
 	{

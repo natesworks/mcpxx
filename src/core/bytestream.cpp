@@ -272,8 +272,10 @@ void Bytestream::skipHeader()
 
 void Bytestream::writePacketHeader(uint16_t packetID)
 {
-	Bytestream header;
-	header.writeVInt(buffer.size());
-	header.writeVInt(packetID);
-	buffer.insert(buffer.begin(), header.getBuffer().begin(), header.getBuffer().end());
+    Bytestream header;
+    header.writeVInt(buffer.size());
+    header.writeVInt(packetID);
+
+    std::vector<uint8_t> headerBuf = header.getBuffer();
+    buffer.insert(buffer.begin(), headerBuf.begin(), headerBuf.end());
 }
