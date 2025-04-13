@@ -20,10 +20,6 @@ public:
 	uint32_t packetLength;
 	const Type type;
 
-	uint32_t protocolVersion;
-	std::string serverAddress;
-	uint16_t port;
-
 	State state;
 	State nextState; // Edit this instead of state or else handlers will break!
 	Bytestream stream;

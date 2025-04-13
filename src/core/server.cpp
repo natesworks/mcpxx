@@ -39,15 +39,6 @@ void Server::handleClient(CallingInstance ci)
 
 		while (true)
 		{
-			if (ci.state == Status)
-			{
-				ci.packetID = readVInt(ci);
-				ci.nextState = ci.state;
-				Messaging::handlePacket(ci);
-				callHandler(ci);
-				ci.state = ci.nextState;
-				continue;
-			}
 			uint8_t header[10];
 			int headerRead = recv(ci.socket, header, sizeof(header), 0);
 			if (headerRead <= 0)
@@ -63,16 +54,26 @@ void Server::handleClient(CallingInstance ci)
 			while (bytesRead < totalSize)
 			{
 				int part = recv(ci.socket, ci.data.data() + bytesRead, totalSize - bytesRead, 0);
-				if (part <= 0)
+				if (part < 0)
 					throw std::runtime_error("Failed to read full packet");
 				bytesRead += part;
 			}
 
 			Utilities::dumpPacket(ci.state, ci.packetID, ci.data);
-			ci.nextState = ci.state;
-			Messaging::handlePacket(ci);
-			callHandler(ci);
-			ci.state = ci.nextState;
+
+			if (ci.state == Status)
+			{
+				ci.packetID = readVInt(ci);
+				ci.nextState = ci.state;
+				callHandler(ci, Messaging::handlePacket(ci));
+				ci.state = ci.nextState;
+			}
+			else
+			{
+				ci.nextState = ci.state;
+				callHandler(ci, Messaging::handlePacket(ci));
+				ci.state = ci.nextState;
+			}
 
 			if (time(nullptr) - timeout > 30)
 			{
@@ -106,6 +107,9 @@ int Server::createSocket()
 	serverSocket = socket(AF_INET, SOCK_STREAM, 0);
 	if (serverSocket == -1)
 		return -1;
+
+	int opt = 1;
+	setsockopt(serverSocket, SOL_SOCKET, SO_REUSEADDR, &opt, sizeof(int));
 
 	sockaddr_in serverAddress {};
 	serverAddress.sin_family = AF_INET;
@@ -147,19 +151,19 @@ void Server::listenForConnections()
 	}
 }
 
-void Server::setHandler(State state, uint32_t packetID, std::function<void(CallingInstance &)> handler)
+void Server::setHandler(State state, uint16_t packetID, std::function<void(CallingInstance &ci, std::unique_ptr<Packet>)> handler)
 {
 	handlers[state][packetID] = handler;
 }
 
-void Server::callHandler(CallingInstance &ci)
+void Server::callHandler(CallingInstance &ci, std::unique_ptr<Packet> packet)
 {
 	auto stateIt = handlers.find(ci.state);
 	if (stateIt != handlers.end())
 	{
 		auto &packetMap = stateIt->second;
-		auto handlerIt = packetMap.find(ci.packetID);
+		auto handlerIt = packetMap.find(packet->getPacketID());
 		if (handlerIt != packetMap.end())
-			handlerIt->second(ci);
+			handlerIt->second(ci, std::move(packet));
 	}
 }

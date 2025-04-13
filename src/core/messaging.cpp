@@ -1,11 +1,10 @@
 #include "messaging.h"
 #include "../data/state.h"
 
-void Messaging::handlePacket(CallingInstance &ci)
+std::unique_ptr<Packet> Messaging::handlePacket(CallingInstance &ci)
 {
     Logger::debug("Handling packet: " + Utilities::toHex(ci.packetID) + " in state: " + std::to_string(ci.state));
     ci.stream = Bytestream(ci.data);
-    ci.stream.skipHeader();
 
     if (ci.type == ServerType)
     {
@@ -13,15 +12,20 @@ void Messaging::handlePacket(CallingInstance &ci)
         {
             if (ci.packetID == 0x0)
             {
-                Handshake handshake(ci);
-                handshake.read();
+                std::unique_ptr<Packet> handshake = std::make_unique<Handshake>(ci);
+                handshake->read();
+                send(ci.socket, ci.stream.getBuffer().data(), ci.stream.getBuffer().size(), 0);
+                return handshake;
             }
         }
         else if (ci.state == Status)
         {
             if (ci.packetID == 0x00)
             {
-
+                std::unique_ptr<Packet> statusRequest = std::make_unique<StatusRequest>(ci);
+                statusRequest->read();
+                send(ci.socket, ci.stream.getBuffer().data(), ci.stream.getBuffer().size(), 0);
+                return statusRequest;
             }
         }
     }
@@ -30,14 +34,5 @@ void Messaging::handlePacket(CallingInstance &ci)
 
     }
 
-    /* If any data was written; send it */
-    if (ci.stream.getOffset() != 0)
-    {
-        send(ci.socket, ci.stream.getBuffer().data(), ci.stream.getBuffer().size(), 0);
-    }
-}
-
-void Messaging::sendPacket(CallingInstance &ci)
-{
-
+    return nullptr;
 }

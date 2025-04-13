@@ -14,7 +14,6 @@ public:
 	uint32_t protocolVersion;
 	std::string serverAddress;
 	uint16_t port;
-	State nextState;
 
 	void read() override;
 	void write() override;

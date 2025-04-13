@@ -3,15 +3,16 @@
 
 void Handshake::read()
 {
-    ci.protocolVersion = ci.stream.readVInt();
-    if (ci.protocolVersion != PROTOCOLVERSION)
+    ci.stream.skipHeader();
+    protocolVersion = ci.stream.readVInt();
+    if (protocolVersion != PROTOCOLVERSION)
     {
-        Logger::debug("Protocol version: " + std::to_string(ci.protocolVersion));
+        Logger::debug("Protocol version: " + std::to_string(protocolVersion));
         throw std::runtime_error("Incompatible client");
         return;
     }
-    ci.serverAddress = ci.stream.readString();
-    ci.port = ci.stream.readUnsignedShort();
+    serverAddress = ci.stream.readString();
+    port = ci.stream.readUnsignedShort();
     ci.nextState = (State)ci.stream.readVInt();
 }
 
@@ -20,7 +21,7 @@ void Handshake::write()
     ci.stream.writeVInt(protocolVersion);
     ci.stream.writeString(serverAddress);
     ci.stream.writeUnsignedShort(port);
-    ci.stream.writeVInt(nextState);
+    ci.stream.writeVInt(ci.nextState);
     ci.stream.writePacketHeader(getPacketID());
 }
 
