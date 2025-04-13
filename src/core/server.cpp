@@ -1,6 +1,6 @@
 #include "server.h"
 
-uint32_t Server::readPacketLength(CallingInstance& ci)
+uint32_t Server::readVInt(CallingInstance &ci)
 {
 	uint32_t value = 0;
 	int position = 0;
@@ -21,7 +21,7 @@ uint32_t Server::readPacketLength(CallingInstance& ci)
 			throw std::runtime_error("VInt too large");
 	}
 
-	throw std::runtime_error("Incomplete VInt");
+	throw std::runtime_error("Error reading VInt");
 }
 
 void Server::handleClient(CallingInstance ci)
@@ -30,7 +30,7 @@ void Server::handleClient(CallingInstance ci)
 	{
 		sockaddr_in clientAddr;
 		socklen_t addrLen = sizeof(clientAddr);
-		if (getpeername(ci.socket, (sockaddr*)&clientAddr, &addrLen) == -1)
+		if (getpeername(ci.socket, (sockaddr *)&clientAddr, &addrLen) == -1)
 			throw std::runtime_error("Failed to get client IP");
 
 		char clientIp[INET_ADDRSTRLEN];
@@ -39,13 +39,22 @@ void Server::handleClient(CallingInstance ci)
 
 		while (true)
 		{
+			if (ci.state == Status)
+			{
+				ci.packetID = readVInt(ci);
+				ci.nextState = ci.state;
+				Messaging::handlePacket(ci);
+				callHandler(ci);
+				ci.state = ci.nextState;
+				continue;
+			}
 			uint8_t header[10];
 			int headerRead = recv(ci.socket, header, sizeof(header), 0);
 			if (headerRead <= 0)
 				break;
 
 			ci.data.assign(header, header + headerRead);
-			uint32_t packetLengthSize = readPacketLength(ci);
+			uint32_t packetLengthSize = readVInt(ci);
 
 			int totalSize = ci.packetLength + packetLengthSize;
 			ci.data.resize(totalSize);
@@ -60,10 +69,10 @@ void Server::handleClient(CallingInstance ci)
 			}
 
 			Utilities::dumpPacket(ci.state, ci.packetID, ci.data);
-            ci.nextState = ci.state;
+			ci.nextState = ci.state;
 			Messaging::handlePacket(ci);
 			callHandler(ci);
-            ci.state = ci.nextState;
+			ci.state = ci.nextState;
 
 			if (time(nullptr) - timeout > 30)
 			{
@@ -74,7 +83,7 @@ void Server::handleClient(CallingInstance ci)
 			timeout = time(nullptr);
 		}
 	}
-	catch (const std::exception& e)
+	catch (const std::exception &e)
 	{
 		Logger::debug("Client disconnected: " + std::string(e.what()));
 	}
@@ -98,12 +107,12 @@ int Server::createSocket()
 	if (serverSocket == -1)
 		return -1;
 
-	sockaddr_in serverAddress{};
+	sockaddr_in serverAddress {};
 	serverAddress.sin_family = AF_INET;
 	serverAddress.sin_port = htons(port);
 	serverAddress.sin_addr.s_addr = INADDR_ANY;
 
-	if (bind(serverSocket, (sockaddr*)&serverAddress, sizeof(serverAddress)) == -1)
+	if (bind(serverSocket, (sockaddr *)&serverAddress, sizeof(serverAddress)) == -1)
 	{
 		close(serverSocket);
 		return -2;
@@ -125,10 +134,10 @@ void Server::listenForConnections()
 
 	while (true)
 	{
-		CallingInstance ci;
-		sockaddr_in clientAddress{};
+		CallingInstance ci(ServerType);
+		sockaddr_in clientAddress {};
 		socklen_t clientLen = sizeof(clientAddress);
-		ci.socket = accept(serverSocket, (sockaddr*)&clientAddress, &clientLen);
+		ci.socket = accept(serverSocket, (sockaddr *)&clientAddress, &clientLen);
 
 		if (ci.socket >= 0)
 		{

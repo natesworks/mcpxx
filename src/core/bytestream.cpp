@@ -1,24 +1,9 @@
 #include "bytestream.h"
 
-Bytestream::Bytestream(const std::vector<uint8_t> &buffer, uint32_t *packetLength, uint32_t *packetID, uint32_t offset)
-	: buffer(buffer), offset(offset)
+Bytestream::Bytestream(const std::vector<uint8_t> &buffer, uint32_t offset)
+	: buffer(buffer)
+	, offset(offset)
 {
-	if (packetLength != nullptr)
-	{
-		*packetLength = readVInt();
-	}
-	else
-	{
-		readVInt();
-	}
-	if (packetID != nullptr)
-	{
-		*packetID = readVInt();
-	}
-	else
-	{
-		readVInt();
-	}
 }
 
 bool Bytestream::readBool()
@@ -272,4 +257,23 @@ void Bytestream::writeAngle(int8_t value)
 uint32_t Bytestream::getOffset()
 {
 	return offset;
+}
+
+std::vector<uint8_t> Bytestream::getBuffer()
+{
+	return buffer;
+}
+
+void Bytestream::skipHeader()
+{
+	readVInt();
+	readVInt();
+}
+
+void Bytestream::writePacketHeader(uint16_t packetID)
+{
+	Bytestream header;
+	header.writeVInt(buffer.size());
+	header.writeVInt(packetID);
+	buffer.insert(buffer.begin(), header.getBuffer().begin(), header.getBuffer().end());
 }

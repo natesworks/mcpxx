@@ -42,7 +42,7 @@ public:
 	int createSocket();
 	void listenForConnections();
 	void setHandler(State state, uint32_t packetID, std::function<void(CallingInstance &)> handler);
-	uint32_t readPacketLength(CallingInstance &ci);
+	uint32_t readVInt(CallingInstance &ci);
 
 private:
 	std::map<State, std::map<uint32_t, std::function<void(CallingInstance &)>>> handlers;

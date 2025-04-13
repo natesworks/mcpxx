@@ -7,7 +7,7 @@ void Utilities::dumpPacket(State state, uint32_t packetID, std::vector<uint8_t> 
 	std::string directory = "dumpedpackets/" + std::to_string(state);
 	std::filesystem::create_directories(directory); // Create directories if they don't exist
 
-	std::ofstream stream(directory + "/" + std::to_string(packetID) + ".bin", std::ios::binary);
+	std::ofstream stream(directory + "/" + toHex(packetID) + ".bin", std::ios::binary);
 	for (uint8_t byte : data)
 	{
 		stream << byte;

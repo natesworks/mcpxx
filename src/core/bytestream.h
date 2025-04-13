@@ -6,6 +6,7 @@
 #include <cstring>
 
 #include "../data/blockposition.h"
+#include "../data/state.h"
 #include "logger.h"
 
 #define SEGMENTBITS 0x7F
@@ -14,7 +15,7 @@
 class Bytestream
 {
 public:
-	Bytestream(const std::vector<uint8_t> &buffer, uint32_t *packetLength = nullptr, uint32_t *packetID = nullptr, uint32_t offset = 0);
+	Bytestream(const std::vector<uint8_t> &buffer, uint32_t offset = 0);
     Bytestream() = default;
 
 	/* Read functions */
@@ -50,6 +51,9 @@ public:
     void writeAngle(int8_t angle);
 
     uint32_t getOffset();
+    std::vector<uint8_t> getBuffer();
+    void skipHeader();
+    void writePacketHeader(uint16_t packetID);
 
 private:
 	std::vector<uint8_t> buffer;
