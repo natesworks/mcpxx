@@ -1,6 +1,9 @@
 #pragma once
 
-#include <string>
+#include <iostream>
+#include <stdexcept>
+
+#include "server.h"
 
 #define COLOR_LOG "\033[34m"
 #define COLOR_ERROR "\033[31m"
@@ -11,8 +14,30 @@
 class Logger
 {
 public:
-	static void log(std::string message);
-	static void warn(std::string message);
-	static void error(std::string message);
-	static void debug(std::string message);
+	template <typename T>
+	static void log(T message)
+	{
+		std::cout << COLOR_LOG << "[INFO] " << RESET << message << std::endl;
+	}
+
+	template <typename T>
+	static void warn(T message)
+	{
+		std::cout << COLOR_WARN << "[WARNING] " << RESET << message << std::endl;
+	}
+
+	template <typename T>
+	static void error(T message)
+	{
+		std::cerr << COLOR_ERROR << "[ERROR] " << RESET << message << std::endl;
+		throw std::runtime_error(message);
+	}
+
+	template <typename T>
+	static void debug(T message)
+	{
+		#ifdef DEBUG
+		std::cout << COLOR_DEBUG << "[DEBUG] " << RESET << message << std::endl;
+		#endif
+	}
 };

@@ -1,5 +1,6 @@
 #include "messaging.h"
 #include "../data/state.h"
+#include "logger.h"
 
 std::unique_ptr<Packet> Messaging::handlePacket(CallingInstance &ci)
 {
@@ -14,7 +15,6 @@ std::unique_ptr<Packet> Messaging::handlePacket(CallingInstance &ci)
             {
                 std::unique_ptr<Packet> handshake = std::make_unique<Handshake>(ci);
                 handshake->read();
-                send(ci.socket, ci.stream.getBuffer().data(), ci.stream.getBuffer().size(), 0);
                 return handshake;
             }
         }
@@ -24,7 +24,6 @@ std::unique_ptr<Packet> Messaging::handlePacket(CallingInstance &ci)
             {
                 std::unique_ptr<Packet> statusRequest = std::make_unique<StatusRequest>(ci);
                 statusRequest->read();
-                send(ci.socket, ci.stream.getBuffer().data(), ci.stream.getBuffer().size(), 0);
                 return statusRequest;
             }
         }

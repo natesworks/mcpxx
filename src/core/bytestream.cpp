@@ -1,4 +1,5 @@
 #include "bytestream.h"
+#include "logger.h"
 
 Bytestream::Bytestream(const std::vector<uint8_t> &buffer, uint32_t offset)
 	: buffer(buffer)
@@ -239,7 +240,7 @@ void Bytestream::writeVLong(int64_t value)
 
 void Bytestream::writeString(const std::string &value)
 {
-	writeVInt(value.length());
+	writeVInt(value.size());
 	buffer.insert(buffer.end(), value.begin(), value.end());
 }
 
@@ -276,6 +277,5 @@ void Bytestream::writePacketHeader(uint16_t packetID)
     header.writeVInt(buffer.size());
     header.writeVInt(packetID);
 
-    std::vector<uint8_t> headerBuf = header.getBuffer();
-    buffer.insert(buffer.begin(), headerBuf.begin(), headerBuf.end());
+    buffer.insert(buffer.begin(), header.buffer.begin(), header.buffer.end());
 }

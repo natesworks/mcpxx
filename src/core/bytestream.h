@@ -7,7 +7,6 @@
 
 #include "../data/blockposition.h"
 #include "../data/state.h"
-#include "logger.h"
 
 #define SEGMENTBITS 0x7F
 #define CONTINUEBIT 0x80
@@ -58,9 +57,4 @@ public:
 private:
 	std::vector<uint8_t> buffer;
     uint32_t offset;
-    union FloatUnion
-    {
-        int value;
-        float fvalue;
-    };
 };

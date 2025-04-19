@@ -1,4 +1,5 @@
 #include "server.h"
+#include "logger.h"
 
 uint32_t Server::readVInt(CallingInstance &ci)
 {
@@ -58,8 +59,6 @@ void Server::handleClient(CallingInstance ci)
 					throw std::runtime_error("Failed to read full packet");
 				bytesRead += part;
 			}
-
-			Utilities::dumpPacket(ci.state, ci.packetID, ci.data);
 
 			ci.nextState = ci.state;
 			callHandler(ci, Messaging::handlePacket(ci));

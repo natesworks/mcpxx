@@ -1,7 +1,9 @@
 #include <nlohmann/json.hpp>
 #include <nlohmann/json_fwd.hpp>
+#include <sys/socket.h>
 
 #include "statusresponse.h"
+#include "../../../core/logger.h"
 
 using ordered_json = nlohmann::ordered_json;
 
@@ -34,14 +36,26 @@ void StatusResponse::read()
         favicon = "";
     }
 
-    enforcesSecureChat = data["enforcesSecureChat"];
+    if (data.contains("enforcesSecureChat"))
+    {
+        enforcesSecureChat = data["enforcesSecureChat"];
+    }
+    else
+    {
+        enforcesSecureChat = false; 
+    }
+
+    Utilities::dumpPacket(ServerType, ci.state, ci.packetID, ci.data);
 }
 
 void StatusResponse::write()
 {
+    ci.stream = Bytestream();
+
     ordered_json data;
     data["version"]["name"] = version;
     data["version"]["protocol"] = protocolVersion;
+
     data["players"]["max"] = maxPlayers;
     data["players"]["online"] = onlinePlayers;
 
@@ -65,9 +79,10 @@ void StatusResponse::write()
     data["enforcesSecureChat"] = enforcesSecureChat;
 
     Logger::debug(data.dump());
-
     ci.stream.writeString(data.dump());
-    ci.stream.writePacketHeader(ci.packetID);
+    ci.stream.writePacketHeader(getPacketID());
+    Utilities::dumpPacket(ServerType, ci.state, getPacketID(), ci.stream.getBuffer());
+    send(ci.socket, ci.stream.getBuffer().data(), ci.stream.getBuffer().size(), 0);
 }
 
 uint16_t StatusResponse::getPacketID()

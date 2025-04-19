@@ -2,6 +2,7 @@
 #include <mcpxx/data/state.h>
 #include <mcpxx/protocol/c2s/handshake/handshake.h>
 #include <mcpxx/protocol/s2c/statusresponse/statusresponse.h>
+#include <mcpxx/core/logger.h>
 #include <thread>
 
 void test(CallingInstance &ci, std::unique_ptr<Packet> packet)
@@ -19,9 +20,9 @@ void statusResponse(CallingInstance &ci, std::unique_ptr<Packet> packet)
     response.description = "Cool server!";
     response.maxPlayers = 1;
     response.enforcesSecureChat = false;
-    response.onlinePlayers = 903;
+    response.onlinePlayers = 1;
     response.players = { { { "name", "Natesworks" }, { "id", "c8498618-1eb4-4640-b74c-71f707f7596c" } } };
-    response.version = "mcpxx";
+    response.version = "1.21.5";
     response.protocolVersion = 770;
     response.write();
 }

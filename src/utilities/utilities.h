@@ -8,10 +8,12 @@
 #include <iomanip>
 
 #include "../data/state.h"
+#include "../data/type.h"
 
 class Utilities
 {
 public:
-    static void dumpPacket(State state, uint32_t packetID, std::vector<uint8_t> data);
+    static void dumpPacket(Type type, State state, uint32_t packetID, std::vector<uint8_t> data);
     static std::string toHex(uint32_t num);
+    static std::string typeToString(Type type);
 };

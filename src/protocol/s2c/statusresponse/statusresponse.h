@@ -5,6 +5,7 @@
 #include <cstdint>
 
 #include "../../../data/packet.h"
+#include "../../../utilities/utilities.h"
 
 class StatusResponse : Packet
 {
